@@ -1,4 +1,5 @@
-use std::fs::DirEntry;
+use bevy::app::AppExit;
+use bevy::input::keyboard::Key;
 use bevy::pbr::{PbrBundle, StandardMaterial};
 use bevy::prelude::*;
 use bevy::window::{WindowRef, WindowResolution};
@@ -24,14 +25,13 @@ use dexterous_developer::{
     ReloadableApp, ReloadableAppContents, ReloadableElementsSetup,
 };
 use egui_code_editor::{ColorTheme, Syntax};
+use std::fs::DirEntry;
 use std::io::{Bytes, Read};
 use std::net::TcpStream;
 use std::path::PathBuf;
 use std::process::exit;
 use std::sync::{Arc, Mutex};
 use std::thread;
-use bevy::app::AppExit;
-use bevy::input::keyboard::Key;
 
 #[hot_bevy_main]
 fn bevy_main(initial_plugins: impl InitialPlugins) {
@@ -122,7 +122,7 @@ fn display_dir(ui: &mut Ui, dir: DirEntry) -> Option<PathBuf> {
     if dir.file_type().unwrap().is_dir() {
         let mut path_buf = None;
         ui.collapsing(dir.file_name().to_str().unwrap(), |ui| {
-            for dir in  std::fs::read_dir(dir.path()).unwrap().into_iter() {
+            for dir in std::fs::read_dir(dir.path()).unwrap().into_iter() {
                 if let Ok(dir) = dir {
                     if let Some(buf) = display_dir(ui, dir) {
                         path_buf.replace(buf);
@@ -168,12 +168,17 @@ impl EditorWindow for CodeEditor {
                 code.code = String::from_utf8(reader).unwrap();
             }
 
-
             let mut control_key = false;
             ui.input(|input| {
                 for event in &input.events {
                     match event {
-                        egui::Event::Key{key, physical_key, pressed, repeat, modifiers } => {
+                        egui::Event::Key {
+                            key,
+                            physical_key,
+                            pressed,
+                            repeat,
+                            modifiers,
+                        } => {
                             if modifiers.ctrl && key.eq(&egui::Key::S) {
                                 if let Some(old) = code.selected_file.clone() {
                                     std::fs::write(old, &code.code).unwrap();
@@ -182,7 +187,7 @@ impl EditorWindow for CodeEditor {
                             if modifiers.ctrl {
                                 control_key = true;
                             }
-                        },
+                        }
                         _ => {}
                     }
                 }
@@ -206,7 +211,7 @@ impl EditorWindow for CodeEditor {
                             .with_syntax(Syntax::rust())
                             .with_numlines(true)
                             .show(ui, &mut temp);
-                    },
+                    }
                     false => {
                         egui_code_editor::CodeEditor::default()
                             .id_source("code editor")
@@ -220,7 +225,6 @@ impl EditorWindow for CodeEditor {
                 }
             }
         });
-
     }
 }
 
@@ -323,9 +327,7 @@ impl EditorWindow for Terminal {
 
         let rich_texts = terminal_state.rich_texts.lock().unwrap().clone();
 
-
         ScrollArea::new(true).show(ui, |ui| {
-
             let mut amount = 0;
             for _ in 0..rich_texts.len() {
                 let mut reached_the_end = true;

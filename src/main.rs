@@ -1,3 +1,9 @@
+use bevy::ecs::system::assert_system_does_not_conflict;
+use crossbeam_channel::Receiver;
+use directories::ProjectDirs;
+use eframe::egui;
+use eframe::egui::ScrollArea;
+use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
 use std::fs::DirEntry;
 use std::io::{Error, Read, Write};
 use std::net::TcpListener;
@@ -7,16 +13,14 @@ use std::str::FromStr;
 use std::sync::mpsc::channel;
 use std::thread;
 use std::time::{Duration, Instant};
-use bevy::ecs::system::assert_system_does_not_conflict;
-use crossbeam_channel::Receiver;
-use directories::ProjectDirs;
-use eframe::egui;
-use eframe::egui::ScrollArea;
-use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
 
 fn main() {
     if !std::env::var("NORMAL_MODE").is_ok() {
-        let has_rust = Command::new("cargo").stdout(Stdio::null()).stderr(Stdio::null()).spawn().is_ok();
+        let has_rust = Command::new("cargo")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .spawn()
+            .is_ok();
         let mut has_dexterous_dev = false;
         if has_rust {
             has_dexterous_dev = Command::new("dexterous_developer_cli").spawn().is_ok();
@@ -25,12 +29,10 @@ fn main() {
             "Native file dialogs and drag-and-drop files",
             eframe::NativeOptions::default(),
             Box::new(move |_cc| Box::new(MyApp::new(has_rust, has_dexterous_dev))),
-        ).unwrap();
+        )
+        .unwrap();
         return;
     }
-
-
-
 
     if std::env::var("IS_UWU").is_ok() {
         mylib::bevy_main();
@@ -38,27 +40,23 @@ fn main() {
         let mut only_ui = false;
         loop {
             let mut child = match only_ui {
-                true => {
-                    std::process::Command::new("dexterous_developer_cli")
-                        .env("IS_UWU", "true")
-                        .env("ONLY_UI", "true")
-                        .env("NORMAL_MODE", "true")
-                        .arg("run")
-                        .stdout(Stdio::piped())
-                        .stderr(Stdio::piped())
-                        .spawn()
-                        .unwrap()
-                }
-                false => {
-                    std::process::Command::new("dexterous_developer_cli")
-                        .env("IS_UWU", "true")
-                        .env("NORMAL_MODE", "true")
-                        .arg("run")
-                        .stdout(Stdio::piped())
-                        .stderr(Stdio::piped())
-                        .spawn()
-                        .unwrap()
-                }
+                true => std::process::Command::new("dexterous_developer_cli")
+                    .env("IS_UWU", "true")
+                    .env("ONLY_UI", "true")
+                    .env("NORMAL_MODE", "true")
+                    .arg("run")
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .spawn()
+                    .unwrap(),
+                false => std::process::Command::new("dexterous_developer_cli")
+                    .env("IS_UWU", "true")
+                    .env("NORMAL_MODE", "true")
+                    .arg("run")
+                    .stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .spawn()
+                    .unwrap(),
             };
             println!("A");
             let mut stdout = child.stdout.take().unwrap();
@@ -85,7 +83,6 @@ fn main() {
                 }
             });
             let listener = TcpListener::bind("127.0.0.0:8888").unwrap();
-
 
             let (mut stream, _) = listener.accept().unwrap();
             let mut break_da_loop = false;
@@ -130,7 +127,6 @@ fn main() {
     }
 }
 
-
 pub struct MyApp {
     has_rust: bool,
     has_dexterous_dev: bool,
@@ -152,15 +148,31 @@ impl MyApp {
         let data_dir = ProjectDirs::from("com", "malek", "bevy_editor").unwrap();
         let data_dir = data_dir.data_dir();
         std::fs::create_dir_all(data_dir).unwrap();
-        std::fs::create_dir_all(ProjectDirs::from("com", "malek", "bevy_editor").unwrap().data_dir().with_file_name("projects")).unwrap();
+        std::fs::create_dir_all(
+            ProjectDirs::from("com", "malek", "bevy_editor")
+                .unwrap()
+                .data_dir()
+                .with_file_name("projects"),
+        )
+        .unwrap();
         let path = data_dir.to_path_buf().with_file_name("bevy_editor.db");
-        let pickel_db = match PickleDb::load(path.clone(), PickleDbDumpPolicy::AutoDump, SerializationMethod::Json) {
+        let pickel_db = match PickleDb::load(
+            path.clone(),
+            PickleDbDumpPolicy::AutoDump,
+            SerializationMethod::Json,
+        ) {
             Ok(db) => db,
-            Err(_) => {
-                PickleDb::new(path, PickleDbDumpPolicy::AutoDump, SerializationMethod::Json)
-            }
+            Err(_) => PickleDb::new(
+                path,
+                PickleDbDumpPolicy::AutoDump,
+                SerializationMethod::Json,
+            ),
         };
-        let mut pos = PathBuf::from(ProjectDirs::from("com", "malek", "bevy_editor").unwrap().data_dir());
+        let mut pos = PathBuf::from(
+            ProjectDirs::from("com", "malek", "bevy_editor")
+                .unwrap()
+                .data_dir(),
+        );
         pos.push("projects");
         let entries = std::fs::read_dir(pos).unwrap();
         let mut projects = vec![];
@@ -215,7 +227,8 @@ impl eframe::App for MyApp {
                         .stderr(Stdio::piped())
                         .arg("install")
                         .arg("dexterous_developer_cli")
-                        .spawn().unwrap();
+                        .spawn()
+                        .unwrap();
 
                     let mut stdout = child.stdout.take().unwrap();
                     let mut stderr = child.stderr.take().unwrap();
@@ -260,7 +273,11 @@ impl eframe::App for MyApp {
                 return;
             }
             if ui.button("reload").clicked() {
-                let mut pos = PathBuf::from(ProjectDirs::from("com", "malek", "bevy_editor").unwrap().data_dir());
+                let mut pos = PathBuf::from(
+                    ProjectDirs::from("com", "malek", "bevy_editor")
+                        .unwrap()
+                        .data_dir(),
+                );
                 pos.push("projects");
                 let entries = std::fs::read_dir(pos).unwrap();
                 self.projects.clear();
@@ -270,46 +287,55 @@ impl eframe::App for MyApp {
                     }
                 }
             }
-            if ui.collapsing("projects", |ui| {
-                for project in &self.projects {
-                    if ui.button(project.file_name().to_str().unwrap()).clicked() {
-                        let mut child = Command::new("cargo")
-                            .arg("run")
-                            .stdout(Stdio::piped())
-                            .stderr(Stdio::piped())
-                            .env("NORMAL_MODE", "true")
-                            .current_dir(project.path())
-                            .spawn().unwrap();
-                        let mut stdout = child.stdout.take().unwrap();
-                        let mut stderr = child.stderr.take().unwrap();
+            if ui
+                .collapsing("projects", |ui| {
+                    for project in &self.projects {
+                        if ui.button(project.file_name().to_str().unwrap()).clicked() {
+                            let mut child = Command::new("cargo")
+                                .arg("run")
+                                .stdout(Stdio::piped())
+                                .stderr(Stdio::piped())
+                                .env("NORMAL_MODE", "true")
+                                .current_dir(project.path())
+                                .spawn()
+                                .unwrap();
+                            let mut stdout = child.stdout.take().unwrap();
+                            let mut stderr = child.stderr.take().unwrap();
 
-                        let (tx, rx) = crossbeam_channel::unbounded();
+                            let (tx, rx) = crossbeam_channel::unbounded();
 
-                        let tx2 = tx.clone();
-                        thread::spawn(move || {
-                            for b in stdout.bytes() {
-                                if let Ok(b) = b {
-                                    print!("{}", char::from(b));
-                                    tx2.send(b).unwrap();
+                            let tx2 = tx.clone();
+                            thread::spawn(move || {
+                                for b in stdout.bytes() {
+                                    if let Ok(b) = b {
+                                        print!("{}", char::from(b));
+                                        tx2.send(b).unwrap();
+                                    }
                                 }
-                            }
-                        });
+                            });
 
-                        thread::spawn(move || {
-                            for b in stderr.bytes() {
-                                if let Ok(b) = b {
-                                    print!("{}", char::from(b));
-                                    tx.send(b).unwrap();
+                            thread::spawn(move || {
+                                for b in stderr.bytes() {
+                                    if let Ok(b) = b {
+                                        print!("{}", char::from(b));
+                                        tx.send(b).unwrap();
+                                    }
                                 }
-                            }
-                        });
-                        self.running_child.replace(child);
-                        self.running_bytes.replace(rx);
-                        self.running_project = true;
+                            });
+                            self.running_child.replace(child);
+                            self.running_bytes.replace(rx);
+                            self.running_project = true;
+                        }
                     }
-                }
-            }).body_response.is_some_and(|a| a.clicked()) {
-                let mut pos = PathBuf::from(ProjectDirs::from("com", "malek", "bevy_editor").unwrap().data_dir());
+                })
+                .body_response
+                .is_some_and(|a| a.clicked())
+            {
+                let mut pos = PathBuf::from(
+                    ProjectDirs::from("com", "malek", "bevy_editor")
+                        .unwrap()
+                        .data_dir(),
+                );
                 pos.push("projects");
                 let entries = std::fs::read_dir(pos).unwrap();
                 self.projects.clear();
@@ -329,11 +355,14 @@ impl eframe::App for MyApp {
                 ui.text_edit_singleline(&mut self.new_project_name);
 
                 if ui.button("create").clicked() {
-                    let mut new_project_position = PathBuf::from(ProjectDirs::from("com", "malek", "bevy_editor").unwrap().data_dir());
+                    let mut new_project_position = PathBuf::from(
+                        ProjectDirs::from("com", "malek", "bevy_editor")
+                            .unwrap()
+                            .data_dir(),
+                    );
 
                     new_project_position.push("projects");
                     new_project_position.push(self.new_project_name.clone());
-
 
                     let mut assets_folder = new_project_position.clone();
                     assets_folder.push("assets");
@@ -360,13 +389,38 @@ impl eframe::App for MyApp {
 
                     std::fs::create_dir_all(new_project_position.clone()).unwrap();
 
-                    let mut cargo_toml = std::fs::OpenOptions::new().write(true).read(true).create(true).open(cargo_pos).unwrap();
-                    let mut cargo_lock = std::fs::OpenOptions::new().write(true).read(true).create(true).open(lock_pos).unwrap();
-                    let mut config_toml = std::fs::OpenOptions::new().write(true).read(true).create(true).open(config_toml).unwrap();
+                    let mut cargo_toml = std::fs::OpenOptions::new()
+                        .write(true)
+                        .read(true)
+                        .create(true)
+                        .open(cargo_pos)
+                        .unwrap();
+                    let mut cargo_lock = std::fs::OpenOptions::new()
+                        .write(true)
+                        .read(true)
+                        .create(true)
+                        .open(lock_pos)
+                        .unwrap();
+                    let mut config_toml = std::fs::OpenOptions::new()
+                        .write(true)
+                        .read(true)
+                        .create(true)
+                        .open(config_toml)
+                        .unwrap();
                     std::fs::create_dir_all(assets_folder).unwrap();
                     std::fs::create_dir_all(src_pos).unwrap();
-                    let mut main_rs = std::fs::OpenOptions::new().write(true).read(true).create(true).open(main_pos).unwrap();
-                    let mut lib_rs = std::fs::OpenOptions::new().write(true).read(true).create(true).open(lib_pos).unwrap();
+                    let mut main_rs = std::fs::OpenOptions::new()
+                        .write(true)
+                        .read(true)
+                        .create(true)
+                        .open(main_pos)
+                        .unwrap();
+                    let mut lib_rs = std::fs::OpenOptions::new()
+                        .write(true)
+                        .read(true)
+                        .create(true)
+                        .open(lib_pos)
+                        .unwrap();
 
                     cargo_toml.write(CARGO_TOML).unwrap();
                     cargo_lock.write(CARGO_LOCK).unwrap();
@@ -379,7 +433,6 @@ impl eframe::App for MyApp {
         });
     }
 }
-
 
 const MAIN_RS: &'static [u8] = include_bytes!("main.rs");
 const LIB_RS: &'static [u8] = include_bytes!("lib.rs");
