@@ -1,7 +1,12 @@
+workspace = { members = ["bevy_project_manager"] }
 [lib]
 crate-type = ["dylib", "rlib"]
 name = "mylib"
 path = "src/lib.rs"
+
+#workspace.members = [
+#    "bevy_project_manager",
+#]
 
 [package]
 edition = "2021"
