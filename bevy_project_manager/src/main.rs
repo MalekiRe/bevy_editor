@@ -28,6 +28,11 @@ fn main() {
     std::fs::create_dir_all(cache_pos.as_path()).unwrap();
     std::fs::create_dir_all(path_buf.as_path()).unwrap();
 
+    Command::new("cargo")
+        .arg("install")
+        .arg("dexterous_developer_cli")
+        .spawn().unwrap();
+
     cache_pos.push("hotreload_watcher");
     if !std::fs::read_dir(cache_pos.clone()).is_ok() {
         templates::Template::hot_reload_watcher()
