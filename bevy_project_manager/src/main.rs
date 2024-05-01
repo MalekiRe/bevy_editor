@@ -1,6 +1,8 @@
 mod templates;
 mod utils;
 
+use crate::templates::Template;
+use crossbeam_channel::Receiver;
 use directories::ProjectDirs;
 use eframe::emath::{Align, Vec2};
 use eframe::{NativeOptions, WindowBuilder};
@@ -10,17 +12,29 @@ use egui_dropdown::DropDownBox;
 use egui_modal::Modal;
 use std::fs::DirEntry;
 use std::io::Write;
+use std::path::PathBuf;
 use std::process::{Child, Command};
 use std::sync::{Arc, Mutex};
-use crossbeam_channel::Receiver;
-use crate::templates::Template;
 
 fn main() {
     let mut path_buf = ProjectDirs::from("com", "malek", "bevy_editor")
         .unwrap()
         .data_dir()
         .to_path_buf();
+    let mut cache_pos = ProjectDirs::from("com", "malek", "bevy_editor")
+        .unwrap()
+        .cache_dir()
+        .to_path_buf();
+    std::fs::create_dir_all(cache_pos.as_path()).unwrap();
     std::fs::create_dir_all(path_buf.as_path()).unwrap();
+
+    cache_pos.push("hotreload_watcher");
+    if !std::fs::read_dir(cache_pos.clone()).is_ok() {
+        templates::Template::hot_reload_watcher()
+            .build_template(cache_pos)
+            .unwrap();
+    }
+
     let mut native_options = NativeOptions::default();
     native_options.viewport.icon.replace(Arc::new(
         eframe::icon_data::from_png_bytes(include_bytes!("../../assets/bevy_logo.png")).unwrap(),
@@ -31,6 +45,15 @@ fn main() {
         Box::new(move |_cc| Box::new(MyApp::new())),
     )
     .unwrap();
+}
+
+fn get_hotreload_dir() -> PathBuf {
+    let mut cache_pos = ProjectDirs::from("com", "malek", "bevy_editor")
+        .unwrap()
+        .cache_dir()
+        .to_path_buf();
+    cache_pos.push("hotreload_watcher");
+    cache_pos
 }
 
 struct MyApp {
@@ -57,7 +80,9 @@ impl ProjectRunner {
             self.first_run = false;
             let mut command = Command::new("cargo");
             command.arg("run");
-            command.current_dir(self.running.dir_entry.path());
+            command.arg("--");
+            command.arg(self.running.dir_entry.path());
+            command.current_dir(get_hotreload_dir());
             let (rx, child) = utils::command_channels(command);
             self.rx.replace(rx);
             self.child.replace(child);
@@ -151,7 +176,12 @@ impl ProjectViewer {
                         let mut dir_path = path_buf.clone();
                         dir_path.pop();
                         std::fs::create_dir_all(dir_path.as_path()).unwrap();
-                        let mut file = std::fs::OpenOptions::new().create(true).write(true).read(true).open(path_buf).unwrap();
+                        let mut file = std::fs::OpenOptions::new()
+                            .create(true)
+                            .write(true)
+                            .read(true)
+                            .open(path_buf)
+                            .unwrap();
                         file.write_all(template.contents).unwrap();
                     }
                     new_project_popup.close();
@@ -161,9 +191,18 @@ impl ProjectViewer {
         });
         let remove_project_popup = Modal::new(ui.ctx(), "remove project modal");
         remove_project_popup.show(|ui| {
-            remove_project_popup.title(ui, format!("Are you sure you want to remove {}", self.dropdown_buf_field));
+            remove_project_popup.title(
+                ui,
+                format!(
+                    "Are you sure you want to remove {}",
+                    self.dropdown_buf_field
+                ),
+            );
             remove_project_popup.buttons(ui, |ui| {
-                if ui.button("wtf no of course not it was an accident").clicked() {
+                if ui
+                    .button("wtf no of course not it was an accident")
+                    .clicked()
+                {
                     remove_project_popup.close();
                 }
                 if ui.button("Yes Delete the Project").clicked() {
@@ -232,9 +271,7 @@ impl ProjectViewer {
                     if ui
                         .add_enabled(self.selected_item.is_some(), egui::Button::new("Edit"))
                         .clicked()
-                    {
-
-                    }
+                    {}
                     if ui
                         .add_enabled(self.selected_item.is_some(), egui::Button::new("Run"))
                         .clicked()
@@ -270,7 +307,6 @@ impl ProjectViewer {
                         .clicked()
                     {
                         new_project_popup.open();
-
                     }
                 });
             });
@@ -278,7 +314,11 @@ impl ProjectViewer {
     pub fn templates(&mut self, ui: &mut Ui) {
         ui.label("No other templates exist yet");
         ui.add_space(20.0);
-        ui.radio_value(&mut self.selected_template, Templates::StandardHotReloadTemplate, "Standard HotReload Template");
+        ui.radio_value(
+            &mut self.selected_template,
+            Templates::StandardHotReloadTemplate,
+            "Standard HotReload Template",
+        );
     }
 }
 #[derive(PartialEq)]
@@ -319,7 +359,7 @@ impl MyApp {
 
 impl eframe::App for MyApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        let mut switch_selected = None;
+        let mut switch_self = None;
         match &mut self.app_states {
             AppStates::ProjectViewer(project_viewer) => {
                 egui::CentralPanel::default().show(ctx, |ui| {
@@ -330,23 +370,31 @@ impl eframe::App for MyApp {
                         .show_inside(ui, project_viewer);
                 });
                 if let Some(selected) = project_viewer.switch_selected.clone() {
-                    switch_selected.replace(project_viewer.items_list.remove(selected));
+                    let running = project_viewer.items_list.remove(selected);
+                    switch_self.replace(AppStates::ProjectRunner(ProjectRunner {
+                        running,
+                        terminal_string: Arc::new(Mutex::new("".to_string())),
+                        first_run: true,
+                        rx: None,
+                        child: None,
+                    }));
                 }
             }
             AppStates::ProjectRunner(project_runner) => {
                 egui::CentralPanel::default().show(ctx, |ui| {
-                   project_runner.run(ui);
+                    project_runner.run(ui);
                 });
+                if let Some(child) = project_runner.child.as_mut() {
+                    if let Ok(c) = child.try_wait() {
+                        if c.is_some() {
+                            switch_self.replace(AppStates::ProjectViewer(ProjectViewer::default()));
+                        }
+                    }
+                }
             }
         }
-        if let Some(running) = switch_selected {
-            self.app_states = AppStates::ProjectRunner(ProjectRunner {
-                running,
-                terminal_string: Arc::new(Mutex::new("".to_string())),
-                first_run: true,
-                rx: None,
-                child: None,
-            })
+        if let Some(running) = switch_self {
+            self.app_states = running;
         }
     }
 }

@@ -1,27 +1,27 @@
+use cansi::v3::categorise_text;
+use crossbeam_channel::Receiver;
+use egui::{Color32, RichText, ScrollArea, Ui};
 use std::io::Read;
 use std::process::{Child, Command, Stdio};
 use std::sync::{Arc, Mutex};
 use std::thread;
-use cansi::v3::categorise_text;
-use crossbeam_channel::Receiver;
-use egui::{Color32, RichText, ScrollArea, Ui};
 
 pub fn rich_text_display_multiline(ui: &mut Ui, rich_texts: &[RichText]) {
     let mut amount = 0;
     for _ in 0..rich_texts.len() {
         let mut reached_the_end = true;
         ui.horizontal(|ui| {
-           for (i, rich_text) in rich_texts.iter().enumerate() {
-               if i <= amount {
-                   continue;
-               }
-               ui.label(rich_text.clone());
-               if rich_text.text().contains('\n') {
-                   amount = i;
-                   reached_the_end = false;
-                   break;
-               }
-           }
+            for (i, rich_text) in rich_texts.iter().enumerate() {
+                if i <= amount {
+                    continue;
+                }
+                ui.label(rich_text.clone());
+                if rich_text.text().contains('\n') {
+                    amount = i;
+                    reached_the_end = false;
+                    break;
+                }
+            }
         });
         if reached_the_end {
             break;
@@ -39,18 +39,18 @@ pub fn command_channels(mut command: Command) -> (Receiver<u8>, Child) {
 
     let tx2 = tx.clone();
     thread::spawn(move || {
-       for b in stdout.bytes() {
-           if let Ok(b) = b {
-               tx2.send(b).unwrap()
-           }
-       }
+        for b in stdout.bytes() {
+            if let Ok(b) = b {
+                tx2.send(b).unwrap()
+            }
+        }
     });
     thread::spawn(move || {
-       for b in stderr.bytes() {
-           if let Ok(b) = b {
-               tx.send(b).unwrap()
-           }
-       }
+        for b in stderr.bytes() {
+            if let Ok(b) = b {
+                tx.send(b).unwrap()
+            }
+        }
     });
 
     (rx, child)
@@ -99,7 +99,7 @@ pub fn rich_text_vec(string: &str) -> Vec<RichText> {
 }
 
 pub fn display_terminal(terminal_string: Arc<Mutex<String>>, rx: Receiver<u8>, ui: &mut Ui) {
-    for _ in 0..rx.len()+20 {
+    for _ in 0..rx.len() + 20 {
         for byte in rx.recv() {
             print!("{}", char::from(byte));
             terminal_string.lock().unwrap().push(char::from(byte));
