@@ -9,7 +9,6 @@ use std::net::{SocketAddr, TcpListener, TcpStream};
 use std::process::{Child, Command, Stdio};
 use std::thread;
 use std::time::Duration;
-use port_selector::random_free_tcp_port;
 
 fn main() {
     // only ui only does ui.
@@ -22,7 +21,7 @@ fn main() {
     }
     let location_to_run = position.unwrap();
     loop {
-        let (tx_port, rx_port) = ( random_free_tcp_port().expect("No free tcp port"),  random_free_tcp_port().expect("No free tcp port"));
+        let (tx_port, rx_port) = ( portpicker::pick_unused_port_range(1026..10_000).expect("No free tcp port"), portpicker::pick_unused_port_range(1026..10_000).expect("No free tcp port"));
         let child_command = create_child_process(only_ui, location_to_run.clone(), rx_port, tx_port);
         let (rx, child) = spawn_child_with_std_out_err_channel(child_command);
         let tx_editor = create_tcp_listener(tx_port);

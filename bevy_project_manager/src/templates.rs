@@ -70,6 +70,7 @@ impl Template<'_> {
             let mut file = std::fs::OpenOptions::new()
                 .create(true)
                 .write(true)
+                .truncate(true)
                 .read(true)
                 .open(path_buf)?;
             file.write_all(template.contents)?;

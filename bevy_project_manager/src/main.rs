@@ -32,11 +32,9 @@ fn main() {
 
 
     cache_pos.push("hotreload_watcher");
-    if !std::fs::read_dir(cache_pos.clone()).is_ok() {
-        templates::Template::hot_reload_watcher()
-            .build_template(cache_pos)
-            .unwrap();
-    }
+    templates::Template::hot_reload_watcher()
+        .build_template(cache_pos)
+        .unwrap();
 
     let mut native_options = NativeOptions::default();
     native_options.viewport.icon.replace(Arc::new(

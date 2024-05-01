@@ -3148,7 +3148,7 @@ name = "hotreload_watcher"
 version = "0.1.0"
 dependencies = [
  "crossbeam-channel",
- "port-selector",
+ "portpicker",
 ]
 
 [[package]]
@@ -4075,10 +4075,9 @@ dependencies = [
 ]
 
 [[package]]
-name = "port-selector"
-version = "0.1.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bd119ef551a50cd8939f0ff93bd062891f7b0dbb771b4a05df8a9c13aebaff68"
+name = "portpicker"
+version = "0.1.1"
+source = "git+https://github.com/spl0i7/portpicker-rs#c798f618e22f54e0e2c55a3db34bb4d6c27b261f"
 dependencies = [
  "rand",
 ]

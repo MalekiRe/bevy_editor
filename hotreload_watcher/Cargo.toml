@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 crossbeam-channel = "0.5.12"
-port-selector = "0.1.6"
+portpicker = { git = "https://github.com/spl0i7/portpicker-rs"}
