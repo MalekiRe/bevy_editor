@@ -136,8 +136,8 @@ pub fn display_terminal(
     scroll_to_bottom: bool,
 ) {
     for _ in 0..terminal_output.len() + 20 {
-        for byte in terminal_output.recv() {
-            print!("{}", char::from(byte));
+        for byte in terminal_output.try_recv() {
+            //print!("{}", char::from(byte));
             terminal_string.push(char::from(byte));
         }
     }

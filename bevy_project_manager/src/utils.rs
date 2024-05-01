@@ -12,14 +12,14 @@ pub fn rich_text_display_multiline(ui: &mut Ui, rich_texts: &[RichText]) {
         let mut reached_the_end = true;
         ui.horizontal(|ui| {
             for (i, rich_text) in rich_texts.iter().enumerate() {
-                if i <= amount {
-                    continue;
-                }
                 ui.label(rich_text.clone());
                 if rich_text.text().contains('\n') {
                     amount = i;
                     reached_the_end = false;
                     break;
+                }
+                if i <= amount {
+                    continue;
                 }
             }
         });
@@ -100,7 +100,7 @@ pub fn rich_text_vec(string: &str) -> Vec<RichText> {
 
 pub fn display_terminal(terminal_string: Arc<Mutex<String>>, rx: Receiver<u8>, ui: &mut Ui) {
     for _ in 0..rx.len() + 20 {
-        for byte in rx.recv() {
+        for byte in rx.try_recv() {
             print!("{}", char::from(byte));
             terminal_string.lock().unwrap().push(char::from(byte));
         }

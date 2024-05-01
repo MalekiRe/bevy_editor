@@ -22,7 +22,6 @@ fn main() {
     }
     let location_to_run = position.unwrap();
     loop {
-        println!("communication info created");
         let (tx_port, rx_port) = ( random_free_tcp_port().expect("No free tcp port"),  random_free_tcp_port().expect("No free tcp port"));
         let child_command = create_child_process(only_ui, location_to_run.clone(), rx_port, tx_port);
         let (rx, child) = spawn_child_with_std_out_err_channel(child_command);
@@ -92,7 +91,7 @@ fn create_tcp_stream(port: u16) -> TcpStream {
                 return stream;
             },
             Err(err) => {
-                if i >= 30 {
+                if i >= 50 {
                     eprintln!("{err}");
                 }
                 thread::sleep(Duration::from_secs(1));
@@ -147,8 +146,6 @@ pub fn spawn_child_with_std_out_err_channel(mut command: Command) -> (Receiver<u
             }
         }
     });
-
-    println!("spawned");
 
     (rx, child)
 }
