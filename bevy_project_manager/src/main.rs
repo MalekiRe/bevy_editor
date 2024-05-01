@@ -28,10 +28,8 @@ fn main() {
     std::fs::create_dir_all(cache_pos.as_path()).unwrap();
     std::fs::create_dir_all(path_buf.as_path()).unwrap();
 
-    Command::new("cargo")
-        .arg("install")
-        .arg("dexterous_developer_cli")
-        .spawn().unwrap();
+
+
 
     cache_pos.push("hotreload_watcher");
     if !std::fs::read_dir(cache_pos.clone()).is_ok() {
@@ -69,11 +67,39 @@ struct MyApp {
 pub enum AppStates {
     ProjectViewer(ProjectViewer),
     ProjectRunner(ProjectRunner),
+    DexterousDevInstall(DexterousDevInstall)
+}
+
+pub struct DexterousDevInstall {
+    child: Child,
+    buf: String,
+    rx: Receiver<u8>,
+}
+
+impl DexterousDevInstall {
+    fn ui(&mut self, ui: &mut Ui) {
+        utils::display_terminal(&mut self.buf, self.rx.clone(), ui);
+    }
+}
+
+impl Default for DexterousDevInstall {
+    fn default() -> Self {
+        let mut command = Command::new("cargo");
+        command.arg("install").arg("dexterous_developer_cli");
+
+        let (rx, child) = utils::command_channels(command);
+
+        DexterousDevInstall {
+            child,
+            buf: "".to_string(),
+            rx,
+        }
+    }
 }
 
 pub struct ProjectRunner {
     running: ProjectItem,
-    terminal_string: Arc<Mutex<String>>,
+    terminal_string: String,
     first_run: bool,
     rx: Option<Receiver<u8>>,
     child: Option<Child>,
@@ -92,7 +118,7 @@ impl ProjectRunner {
             self.rx.replace(rx);
             self.child.replace(child);
         }
-        utils::display_terminal(self.terminal_string.clone(), self.rx.clone().unwrap(), ui);
+        utils::display_terminal(&mut self.terminal_string, self.rx.clone().unwrap(), ui);
     }
 }
 
@@ -357,7 +383,7 @@ impl MyApp {
         let mut tree = DockState::new(vec!["Projects".to_string(), "Templates".to_string()]);
         Self {
             tree,
-            app_states: AppStates::ProjectViewer(ProjectViewer::default()),
+            app_states: AppStates::DexterousDevInstall(DexterousDevInstall::default()),
         }
     }
 }
@@ -378,7 +404,7 @@ impl eframe::App for MyApp {
                     let running = project_viewer.items_list.remove(selected);
                     switch_self.replace(AppStates::ProjectRunner(ProjectRunner {
                         running,
-                        terminal_string: Arc::new(Mutex::new("".to_string())),
+                        terminal_string: "".to_string(),
                         first_run: true,
                         rx: None,
                         child: None,
@@ -394,6 +420,16 @@ impl eframe::App for MyApp {
                         if c.is_some() {
                             switch_self.replace(AppStates::ProjectViewer(ProjectViewer::default()));
                         }
+                    }
+                }
+            }
+            AppStates::DexterousDevInstall(dexterous_dev_install) => {
+                egui::CentralPanel::default().show(ctx, |ui| {
+                  dexterous_dev_install.ui(ui);
+                });
+                if let Ok(c) = dexterous_dev_install.child.try_wait() {
+                    if c.is_some() {
+                        switch_self.replace(AppStates::ProjectViewer(ProjectViewer::default()));
                     }
                 }
             }

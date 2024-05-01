@@ -98,15 +98,15 @@ pub fn rich_text_vec(string: &str) -> Vec<RichText> {
     rich_texts
 }
 
-pub fn display_terminal(terminal_string: Arc<Mutex<String>>, rx: Receiver<u8>, ui: &mut Ui) {
+pub fn display_terminal(terminal_string: &mut String, rx: Receiver<u8>, ui: &mut Ui) {
     for _ in 0..rx.len() + 20 {
         for byte in rx.try_recv() {
             print!("{}", char::from(byte));
-            terminal_string.lock().unwrap().push(char::from(byte));
+            terminal_string.push(char::from(byte));
         }
     }
     ScrollArea::new(true).show(ui, |ui| {
-        rich_text_display_multiline(ui, &rich_text_vec(terminal_string.lock().unwrap().as_str()));
+        rich_text_display_multiline(ui, &rich_text_vec(terminal_string.as_str()));
         let rect = ui.label("").rect;
         ui.scroll_to_rect(rect, None);
     });
