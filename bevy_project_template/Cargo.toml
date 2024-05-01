@@ -1,0 +1,25 @@
+[package]
+name = "bevy_project_template"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["dylib", "rlib"]
+name = "mylib"
+path = "src/lib.rs"
+
+[package.metadata]
+hot_reload_features = ["bevy/dynamic_linking", "bevy/embedded_watcher"]
+
+[dependencies]
+bevy = "0.13.2"
+bevy_editor_pls = "0.8.1"
+dexterous_developer = "0.2.0"
+serde = "1"
+bevy_editor_pls_core = "0.8.1"
+egui_code_editor = "0.2.4"
+bevy_editor_pls_default_windows = "0.8.1"
+crossbeam-channel = "0.5.12"
+cansi = "2.2.1"
