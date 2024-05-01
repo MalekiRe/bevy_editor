@@ -74,7 +74,7 @@ pub fn rich_text_vec(string: &str) -> Vec<RichText> {
 }
 
 fn create_tcp_listener(port: u16) -> TcpStream {
-    match TcpListener::bind(format!("127.0.0.0:{}", port)) {
+    match TcpListener::bind(format!("localhost:{}", port)) {
         Ok(listener) => {
             println!("bound to: {port}");
             let (listener, _) = listener.accept().unwrap();
@@ -88,7 +88,7 @@ fn create_tcp_listener(port: u16) -> TcpStream {
 
 fn create_tcp_stream(port: u16) -> TcpStream {
     for i in 0..50 {
-        match TcpStream::connect(format!("127.0.0.0:{port}")) {
+        match TcpStream::connect(format!("localhost:{port}")) {
             Ok(stream) => {
                 println!("connected to: {port}");
                 return stream;
