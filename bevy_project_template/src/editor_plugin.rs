@@ -3,13 +3,20 @@ use crate::terminal::display_terminal;
 use bevy::app::{Plugin, Update};
 use bevy::prelude::{MonitorSelection, Window, WindowPosition, World};
 use bevy::window::{WindowRef, WindowResolution};
-use bevy_editor_pls::egui::Ui;
+use bevy_editor_pls::egui::{FontDefinitions, Ui};
 use bevy_editor_pls::{controls, egui_dock, EditorWindowPlacement};
 use bevy_editor_pls_core::editor_window::{EditorWindow, EditorWindowContext};
 use bevy_editor_pls_core::{editor, AddEditorWindow};
 use crossbeam_channel::{Receiver, Sender};
+use crate::code_editor::CodeEditor;
 
 pub struct Terminal;
+
+pub fn add_to_fonts(ui: &mut Ui) {
+    let mut fonts = FontDefinitions::default();
+    egui_phosphor::add_to_fonts(&mut fonts, egui_phosphor::Variant::Regular);
+    ui.ctx().set_fonts(fonts);
+}
 
 pub struct TerminalState {
     terminal_buf: String,
@@ -126,7 +133,8 @@ impl Plugin for EditorPlugin {
             app.add_editor_window::<GizmoWindow>();
             app.add_editor_window::<controls::ControlsWindow>();
 
-            app.add_editor_window::<Terminal>();
+            app.add_editor_window::<CodeEditor>();
+            //app.add_editor_window::<Terminal>();
 
             app.add_plugins(bevy::pbr::wireframe::WireframePlugin);
 
@@ -137,14 +145,14 @@ impl Plugin for EditorPlugin {
 
             let [game, _inspector] =
                 internal_state.split_right::<InspectorWindow>(egui_dock::NodeIndex::root(), 0.75);
-            /*internal_state.push_to_focused_leaf::<CodeEditor>();*/
+            internal_state.push_to_focused_leaf::<CodeEditor>();
             let [game, _hierarchy] = internal_state.split_left::<HierarchyWindow>(game, 0.2);
             let [_game, _bottom] = internal_state.split_many(
                 game,
                 0.8,
                 egui_dock::Split::Below,
                 &[
-                    std::any::TypeId::of::<Terminal>(),
+                    //std::any::TypeId::of::<Terminal>(),
                     std::any::TypeId::of::<ResourcesWindow>(),
                     std::any::TypeId::of::<AssetsWindow>(),
                     std::any::TypeId::of::<DebugSettingsWindow>(),

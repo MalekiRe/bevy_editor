@@ -1109,7 +1109,7 @@ dependencies = [
  "egui 0.27.2",
  "egui-dropdown",
  "egui-modal",
- "egui-phosphor",
+ "egui-phosphor 0.5.0",
  "egui_dock 0.12.0",
  "egui_extras",
 ]
@@ -1125,6 +1125,7 @@ dependencies = [
  "cansi",
  "crossbeam-channel",
  "dexterous_developer",
+ "egui-phosphor 0.4.0",
  "egui_code_editor",
  "serde",
 ]
@@ -2267,6 +2268,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "738cdffefd15dbb6a5fff75d118eee82a9e894bbfa45e41c24d7de42519fa673"
 dependencies = [
  "egui 0.27.2",
+]
+
+[[package]]
+name = "egui-phosphor"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "99eee0cd30e48fa2678a6ac3520601ada8ddb3c860405df43a094e6adbeebd40"
+dependencies = [
+ "egui 0.26.2",
 ]
 
 [[package]]

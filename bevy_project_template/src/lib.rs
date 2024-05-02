@@ -16,9 +16,10 @@ use std::process::exit;
 
 mod editor_plugin;
 pub mod terminal;
+mod code_editor;
 
 #[hot_bevy_main]
-fn bevy_main(initial_plugins: impl InitialPlugins) {
+pub fn bevy_main(initial_plugins: impl InitialPlugins) {
     let mut app = App::new();
     app.add_plugins(initial_plugins.initialize::<DefaultPlugins>());
     app.add_plugins(EditorPlugin::default());

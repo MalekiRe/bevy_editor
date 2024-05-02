@@ -42,6 +42,10 @@ impl Template<'_> {
                 relative_path: PathBuf::from("Cargo.lock"),
                 contents: include_bytes!("../../bevy_project_template/Cargo.lock"),
             },
+            FileTemplate {
+                relative_path: PathBuf::from("src/code_editor.rs"),
+                contents: include_bytes!("../../bevy_project_template/src/code_editor.rs"),
+            }
         ];
         Template { file_templates }
     }
